@@ -6,24 +6,29 @@ import java.util.List;
 /**
  * Created by osdjup on 2016-07-14.
  */
-public class Node {
-    private List<Node> children;
+public class Node<T> extends Element<T> {
+    private Node parent;
+    private List<Element> children;
     private List<Attribute> attributes;
-    private String content;
+    private T content;
     private String name;
+    private boolean closed;
 
     public Node() {
         children = new ArrayList<>();
         attributes = new ArrayList<>();
-        content = "";
         name = "";
     }
 
-    public Node(String name, String content) {
+    public Node(String name, T content) {
         children = new ArrayList<>();
         attributes = new ArrayList<>();
         this.content = content;
         this.name = name;
+    }
+
+    public Node getParent() {
+        return parent;
     }
 
     public String getName() {
@@ -34,36 +39,97 @@ public class Node {
         return attributes;
     }
 
-    public List<Node> getChildren() {
+    public List<Element> getChildren() {
         return children;
     }
 
-    public String getContent() {
+    public T getContent() {
         return content;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setContent(String content) {
+    public void setContent(T content) {
         this.content = content;
+    }
+
+    public void setClosed(boolean closed) {
+        this.closed = closed;
+    }
+
+    public void setParent(Node parent) {
+        this.parent = parent;
+    }
+
+    public String toFormattedString(String tabs) {
+        String retVal =  tabs + "<" + name;
+        if (attributes.size() > 0) {
+            for (Attribute a : attributes) {
+                retVal += " " + a.toString();
+            }
+        }
+        if (children.size() > 0 || content != null) {
+
+            if (content != null) {
+                if (!(content instanceof String)) {
+                    retVal += "(" + content.getClass().getSimpleName() + ")";
+                }
+                retVal += ">";
+                if (children.size() > 0) {
+                    for (Element child : children) {
+                        retVal += "\n" + child.toFormattedString(tabs + "\t");
+                    }
+                }
+                retVal += "\n\t" + tabs + content;
+            } else {
+                retVal += ">";
+                for (Element child : children) {
+                    retVal += "\n" + child.toFormattedString(tabs + "\t");
+                }
+            }
+            retVal += "\n" + tabs + "</" + name + ">";
+        } else {
+            retVal += "/>";
+        }
+
+        return retVal;
+    }
+
+    public String toFormattedString() {
+        return toFormattedString("");
     }
 
     @Override
     public String toString() {
         String retVal =  "<" + name;
-        retVal += name;
         if (attributes.size() > 0) {
-            retVal += " ";
             for (Attribute a : attributes) {
-                retVal += a.getName() + "=\"" + a.getValue() + "\"";
+                retVal += " " + a.toString();
             }
         }
-        if (children.size() > 0 || !content.isEmpty()) {
-            retVal += "/>";
+        if (children.size() > 0 || content != null) {
+
+            if (content != null) {
+                if (!(content instanceof String)) {
+                    retVal += "(" + content.getClass().getSimpleName() + ")";
+                }
+                retVal += ">";
+                retVal += content;
+            } else {
+                retVal += ">";
+                for (Element child : children) {
+                    retVal += child.toString();
+                }
+            }
+            retVal += "</" + name + ">";
         } else {
-            retVal += ">";
+            retVal += "/>";
         }
 
         return retVal;

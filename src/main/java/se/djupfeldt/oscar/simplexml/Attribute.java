@@ -3,15 +3,22 @@ package se.djupfeldt.oscar.simplexml;
 /**
  * Created by osdjup on 2016-07-14.
  */
-public class Attribute {
+public class Attribute<T> {
     private String name;
-    private String value;
+    private T value;
+
+    public Attribute() {}
+
+    public Attribute(String name, T value) {
+        this.name = name;
+        this.value = value;
+    }
 
     public String getName() {
         return name;
     }
 
-    public String getValue() {
+    public T getValue() {
         return value;
     }
 
@@ -19,7 +26,16 @@ public class Attribute {
         this.name = name;
     }
 
-    public void setValue(String value) {
+    public void setValue(T value) {
         this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        if (value instanceof String) {
+            return name + "=\"" + value + "\"";
+        } else {
+            return name + "=(" + value.getClass().getSimpleName() + ")\"" + value + "\"";
+        }
     }
 }
