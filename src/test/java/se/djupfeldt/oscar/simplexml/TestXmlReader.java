@@ -15,7 +15,7 @@ public class TestXmlReader {
                 "\t<child1 c=(Boolean)\"false\"/>\n" +
                 "\t<child4>\n" +
                 "\t\t<child6/>\n" +
-                "        hej<!-- comment -- 1 -->hå\n" +
+                "        <!-- comment -- 1 -->\n" +
                 "\t\t<child7>\n" +
                 "\t\t    <!-- comment 2 -->\n" +
                 "\t\t\taasd\n" +
