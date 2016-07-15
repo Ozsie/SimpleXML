@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by osdjup on 2016-07-14.
@@ -44,9 +46,13 @@ public class XmlReader {
                     sr.mark(0);
                     char next = (char) sr.read();
                     if (next == '/') {
-                        currentParent = currentParent.getParent();
+                        if (currentParent.getParent() != null) {
+                            currentParent = currentParent.getParent();
+                        }
                     } else if (next == '!') {
                         LOG.debug("Found comment");
+                        Comment comment = getComment(sr);
+                        currentParent.getComments().add(comment);
                     } else if (next == '?') {
                         LOG.debug("Found header");
                     } else {
@@ -57,6 +63,10 @@ public class XmlReader {
                         } else {
                             Node node = readTag(sr);
                             node.setParent(currentParent);
+                            if (node.isClosed() && node.getChildren().size() > 0) {
+                                currentParent.getChildren().addAll(node.getChildren());
+                                node.getChildren().clear();
+                            }
                             currentParent.getChildren().add(node);
                             if (!node.isClosed() && node.getContent() == null) {
                                 currentParent = node;
@@ -91,7 +101,12 @@ public class XmlReader {
         String[] parts = tag.split(" ");
         String name = parts[0];
 
-        Node node = getContent(sr);
+        Node node;
+        if (closed) {
+            node = new Node<String>();
+        } else {
+            node = getContent(sr);
+        }
 
         getAttributes(node, parts);
         node.setClosed(closed);
@@ -113,12 +128,12 @@ public class XmlReader {
             sr.reset();
             return getNodeContent(sr);
         } else if (trim.equals("<") && next == '!') {
-            LOG.debug("FOUND COMMENT");
             sr.reset();
             Comment comment = getComment(sr);
             Node node = getNodeContent(sr);
             node.getChildren().add(comment);
-             return node;
+            LOG.debug("FOUND COMMENT: {}", comment.getContent());
+            return node;
         } else {
             sr.reset();
         }
@@ -128,12 +143,28 @@ public class XmlReader {
     private Node getNodeContent(StringReader sr) throws IOException {
         int current;
         String text = "";
-        while ((current = sr.read()) != '<') {
-            if (current == -1) {
-                break;
+        List<Comment> comments = new ArrayList<>();
+        char currentChar;
+        while ((current = sr.read()) != -1) {
+            currentChar = (char) current;
+            sr.mark(0);
+            if (current == '<') {
+                if (sr.read() == '!') {
+                    LOG.debug("FOUND COMMENT");
+                    sr.reset();
+                    Comment comment = getComment(sr);
+                    comment.setContent(comment.getContent().replaceFirst("!--", "").trim());
+                    comments.add(comment);
+                    text += "&" + comments.indexOf(comment) + ";";
+                } else {
+                    sr.reset();
+                    break;
+                }
+            } else {
+                text += (char) current;
             }
-            text += (char) current;
         }
+
         text = text.trim();
         if (text.isEmpty()) {
             sr.reset();
@@ -142,22 +173,27 @@ public class XmlReader {
         if (forceStringContent) {
             Node<String> node = new Node();
             node.setContent(text);
+            node.getComments().addAll(comments);
             return node;
         } else if (isBoolean(text)) {
             Node<Boolean> node = new Node<>();
             node.setContent(Boolean.parseBoolean(text));
+            node.getComments().addAll(comments);
             return node;
         } else if (isInteger(text)) {
             Node<Long> node = new Node<>();
             node.setContent(Long.parseLong(text));
+            node.getComments().addAll(comments);
             return node;
         } else if (isDouble(text)) {
             Node<Double> node = new Node<>();
             node.setContent(Double.parseDouble(text));
+            node.getComments().addAll(comments);
             return node;
         } else {
             Node<String> node = new Node<>();
             node.setContent(text);
+            node.getComments().addAll(comments);
             return node;
         }
     }

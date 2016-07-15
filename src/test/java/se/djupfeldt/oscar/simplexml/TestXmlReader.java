@@ -11,8 +11,9 @@ public class TestXmlReader {
     @org.junit.Test
     public void testParseXmlText() {
         String text = "<? header >\n" +
-                "<root a=(Long)\"7\" b=(Double)\"5.6\">\n" +
-                "\t<child1 c=(Boolean)\"false\"/>\n" +
+                "<root a=\"7\" b=\"5.6\">\n" +
+                "<child8><!-- comment 2 -->aasd</child8>" +
+                "\t<child1 c=\"false\"/>\n" +
                 "\t<child4>\n" +
                 "\t\t<child6/>\n" +
                 "        <!-- comment -- 1 -->\n" +
@@ -21,14 +22,14 @@ public class TestXmlReader {
                 "\t\t\taasd\n" +
                 "\t\t</child7>\n" +
                 "\t</child4>\n" +
-                "\t<child2(Long)>\n" +
+                "\t<child2>\n" +
                 "\t\t15\n" +
                 "\t</child2>\n" +
                 "\t<child3>\n" +
                 "\t\t<child4/>\n" +
                 "\t\t<child4/>\n" +
                 "\t\t<child5 d=\"d\">\n" +
-                "\t\t\tapa apa\n" +
+                "\t\t\tapa<!-- comment 3 -->apa<!-- comment 4 -->apa\n" +
                 "\t\t</child5>\n" +
                 "\t</child3>\n" +
                 "\t<child4/>\n" +
@@ -37,11 +38,6 @@ public class TestXmlReader {
         try {
             Document doc = reader.parseXmlText(text);
             System.out.println(doc.toFormattedString());
-            List<Node> child4 = doc.getNodesByName("child4");
-            for (Node n : child4) {
-                System.out.println("--");
-                System.out.println(n.toFormattedString());
-            }
         } catch (XmlParseException e) {
             e.printStackTrace();
         }
@@ -67,7 +63,7 @@ public class TestXmlReader {
 		<child4/>
 		<child4/>
 		<child5 d="d">
-			apa apa
+			apa<!-- comment 3 -->apa
 		</child5>
 	</child3>
 	<child4/>

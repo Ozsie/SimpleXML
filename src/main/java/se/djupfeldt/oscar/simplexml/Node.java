@@ -8,7 +8,8 @@ import java.util.List;
  */
 public class Node<T> extends Element<T> {
     private Node parent;
-    private List<Element> children;
+    private List<Node> children;
+    private List<Comment> comments;
     private List<Attribute> attributes;
     private T content;
     private String name;
@@ -17,12 +18,14 @@ public class Node<T> extends Element<T> {
     public Node() {
         children = new ArrayList<>();
         attributes = new ArrayList<>();
+        comments = new ArrayList<>();
         name = "";
     }
 
     public Node(String name, T content) {
         children = new ArrayList<>();
         attributes = new ArrayList<>();
+        comments = new ArrayList<>();
         this.content = content;
         this.name = name;
     }
@@ -39,8 +42,12 @@ public class Node<T> extends Element<T> {
         return attributes;
     }
 
-    public List<Element> getChildren() {
+    public List<Node> getChildren() {
         return children;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
     }
 
     public T getContent() {
@@ -74,23 +81,36 @@ public class Node<T> extends Element<T> {
                 retVal += " " + a.toString();
             }
         }
-        if (children.size() > 0 || content != null) {
-
+        if (!closed) {
+            retVal += ">";
             if (content != null) {
+                retVal += "\n\t" + tabs;
                 if (!(content instanceof String)) {
-                    retVal += "(" + content.getClass().getSimpleName() + ")";
+                    retVal += "(" + content.getClass().getSimpleName() + ")" + content;
+                } else {
+                    if (comments.size() > 0) {
+                        String content = (String)this.content;
+                        for (int i = 0; i < comments.size(); i++) {
+                            content = content.replace("&" + i + ";", comments.get(i).toString());
+                        }
+                        retVal += content;
+                    }
                 }
-                retVal += ">";
                 if (children.size() > 0) {
                     for (Element child : children) {
                         retVal += "\n" + child.toFormattedString(tabs + "\t");
                     }
                 }
-                retVal += "\n\t" + tabs + content;
             } else {
-                retVal += ">";
-                for (Element child : children) {
-                    retVal += "\n" + child.toFormattedString(tabs + "\t");
+                if (comments.size() > 0) {
+                    for (Comment comment : comments) {
+                        retVal += "\n" + comment.toFormattedString(tabs + "\t");
+                    }
+                }
+                if (children.size() > 0){
+                    for (Element child : children) {
+                        retVal += "\n" + child.toFormattedString(tabs + "\t");
+                    }
                 }
             }
             retVal += "\n" + tabs + "</" + name + ">";
@@ -113,18 +133,30 @@ public class Node<T> extends Element<T> {
                 retVal += " " + a.toString();
             }
         }
-        if (children.size() > 0 || content != null) {
-
+        if (!closed) {
+            retVal += ">";
             if (content != null) {
                 if (!(content instanceof String)) {
-                    retVal += "(" + content.getClass().getSimpleName() + ")";
+                    retVal += "(" + content.getClass().getSimpleName() + ")" + content;
+                } else {
+                    if (comments.size() > 0) {
+                        String content = (String)this.content;
+                        for (int i = 0; i < comments.size(); i++) {
+                            content = content.replace("&" + i + ";", comments.get(i).toString());
+                        }
+                        retVal += content;
+                    }
                 }
-                retVal += ">";
-                retVal += content;
             } else {
-                retVal += ">";
-                for (Element child : children) {
-                    retVal += child.toString();
+                if (comments.size() > 0) {
+                    for (Comment comment : comments) {
+                        retVal += comment.toString();
+                    }
+                }
+                if (children.size() > 0){
+                    for (Element child : children) {
+                        retVal += child.toString();
+                    }
                 }
             }
             retVal += "</" + name + ">";
