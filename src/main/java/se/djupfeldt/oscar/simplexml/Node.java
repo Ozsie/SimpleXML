@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class Node<T> extends Element<T> {
     private Node parent;
-    private List<Node> children;
+    private List<Element> children;
     private List<Comment> comments;
     private List<Attribute> attributes;
     private T content;
@@ -42,7 +42,7 @@ public class Node<T> extends Element<T> {
         return attributes;
     }
 
-    public List<Node> getChildren() {
+    public List<Element> getChildren() {
         return children;
     }
 
@@ -88,25 +88,13 @@ public class Node<T> extends Element<T> {
                 if (!(content instanceof String)) {
                     retVal += "(" + content.getClass().getSimpleName() + ")" + content;
                 } else {
-                    if (comments.size() > 0) {
-                        String content = (String)this.content;
-                        for (int i = 0; i < comments.size(); i++) {
-                            content = content.replace("&" + i + ";", comments.get(i).toString());
-                        }
-                        retVal += content;
+                    String content = (String)this.content;
+                    for (int i = 0; i < comments.size(); i++) {
+                        content = content.replace("&" + i + ";", comments.get(i).toString());
                     }
-                }
-                if (children.size() > 0) {
-                    for (Element child : children) {
-                        retVal += "\n" + child.toFormattedString(tabs + "\t");
-                    }
+                    retVal += content;
                 }
             } else {
-                if (comments.size() > 0) {
-                    for (Comment comment : comments) {
-                        retVal += "\n" + comment.toFormattedString(tabs + "\t");
-                    }
-                }
                 if (children.size() > 0){
                     for (Element child : children) {
                         retVal += "\n" + child.toFormattedString(tabs + "\t");
@@ -139,20 +127,13 @@ public class Node<T> extends Element<T> {
                 if (!(content instanceof String)) {
                     retVal += "(" + content.getClass().getSimpleName() + ")" + content;
                 } else {
-                    if (comments.size() > 0) {
-                        String content = (String)this.content;
-                        for (int i = 0; i < comments.size(); i++) {
-                            content = content.replace("&" + i + ";", comments.get(i).toString());
-                        }
-                        retVal += content;
+                    String content = (String)this.content;
+                    for (int i = 0; i < comments.size(); i++) {
+                        content = content.replace("&" + i + ";", comments.get(i).toString());
                     }
+                    retVal += content;
                 }
             } else {
-                if (comments.size() > 0) {
-                    for (Comment comment : comments) {
-                        retVal += comment.toString();
-                    }
-                }
                 if (children.size() > 0){
                     for (Element child : children) {
                         retVal += child.toString();

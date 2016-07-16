@@ -12,7 +12,7 @@ public class TestXmlReader {
     public void testParseXmlText() {
         String text = "<? header >\n" +
                 "<root a=\"7\" b=\"5.6\">\n" +
-                "<child8><!-- comment 2 -->aasd</child8>" +
+                "<child8><!-- comment 5 -->aas<!-- comment 6 -->d</child8>" +
                 "\t<child1 c=\"false\"/>\n" +
                 "\t<child4>\n" +
                 "\t\t<child6/>\n" +

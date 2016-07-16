@@ -53,6 +53,7 @@ public class XmlReader {
                         LOG.debug("Found comment");
                         Comment comment = getComment(sr);
                         currentParent.getComments().add(comment);
+                        currentParent.getChildren().add(comment);
                     } else if (next == '?') {
                         LOG.debug("Found header");
                     } else {
@@ -131,7 +132,9 @@ public class XmlReader {
             sr.reset();
             Comment comment = getComment(sr);
             Node node = getNodeContent(sr);
+            node.getComments().add(comment);
             node.getChildren().add(comment);
+            node.setContent("&" + node.getComments().indexOf(comment) + ";" + node.getContent());
             LOG.debug("FOUND COMMENT: {}", comment.getContent());
             return node;
         } else {
@@ -174,26 +177,31 @@ public class XmlReader {
             Node<String> node = new Node();
             node.setContent(text);
             node.getComments().addAll(comments);
+            node.getChildren().addAll(comments);
             return node;
         } else if (isBoolean(text)) {
             Node<Boolean> node = new Node<>();
             node.setContent(Boolean.parseBoolean(text));
             node.getComments().addAll(comments);
+            node.getChildren().addAll(comments);
             return node;
         } else if (isInteger(text)) {
             Node<Long> node = new Node<>();
             node.setContent(Long.parseLong(text));
             node.getComments().addAll(comments);
+            node.getChildren().addAll(comments);
             return node;
         } else if (isDouble(text)) {
             Node<Double> node = new Node<>();
             node.setContent(Double.parseDouble(text));
             node.getComments().addAll(comments);
+            node.getChildren().addAll(comments);
             return node;
         } else {
             Node<String> node = new Node<>();
             node.setContent(text);
             node.getComments().addAll(comments);
+            node.getChildren().addAll(comments);
             return node;
         }
     }
