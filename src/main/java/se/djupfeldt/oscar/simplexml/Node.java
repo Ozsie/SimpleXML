@@ -74,6 +74,17 @@ public class Node<T> extends Element<T> {
         this.parent = parent;
     }
 
+    public boolean hasChild(String name) {
+        for (Element child : children) {
+            if (child instanceof Node) {
+                if (((Node) child).getName().equals(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public String toFormattedString(String tabs) {
         String retVal =  tabs + "<" + name;
         if (attributes.size() > 0) {

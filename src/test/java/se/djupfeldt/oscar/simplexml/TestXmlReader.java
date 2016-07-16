@@ -10,7 +10,7 @@ public class TestXmlReader {
 
     @org.junit.Test
     public void testParseXmlText() {
-        String text = "<? header >\n" +
+        String text = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"  >\n" +
                 "<root a=\"7\" b=\"5.6\">\n" +
                 "<child8><!-- comment 5 -->aas<!-- comment 6 -->d</child8>" +
                 "\t<child1 c=\"false\"/>\n" +
@@ -26,8 +26,8 @@ public class TestXmlReader {
                 "\t\t15\n" +
                 "\t</child2>\n" +
                 "\t<child3>\n" +
-                "\t\t<child4/>\n" +
-                "\t\t<child4/>\n" +
+                "\t\t<child4></child4>\n" +
+                "\t\t<child4 ko=\"u\"><a><b><c>djur</c></b></a></child4>\n" +
                 "\t\t<child5 d=\"d\">\n" +
                 "\t\t\tapa<!-- comment 3 -->apa<!-- comment 4 -->apa\n" +
                 "\t\t</child5>\n" +

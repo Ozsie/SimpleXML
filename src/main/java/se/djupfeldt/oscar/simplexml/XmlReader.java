@@ -37,6 +37,7 @@ public class XmlReader {
 
         Node root = null;
         Node currentParent = null;
+        Node previousReadNode = null;
         try {
             StringReader sr = new StringReader(fileContent);
             int current = 0;
@@ -46,23 +47,33 @@ public class XmlReader {
                     sr.mark(0);
                     char next = (char) sr.read();
                     if (next == '/') {
+                        String tag = getTagString(sr);
+                        if (!tag.equals(currentParent.getName()) && !tag.equals(previousReadNode.getName())) {
+                            if (!currentParent.hasChild(tag)) {
+                                throw new XmlParseException("Closing tag does not match opening tag: <" + currentParent.getName() + ">, </" + tag + ">");
+                            }
+                        }
+                        LOG.debug("Closing tag {}", tag);
                         if (currentParent.getParent() != null) {
                             currentParent = currentParent.getParent();
                         }
                     } else if (next == '!') {
-                        LOG.debug("Found comment");
                         Comment comment = getComment(sr);
                         currentParent.getComments().add(comment);
                         currentParent.getChildren().add(comment);
                     } else if (next == '?') {
-                        LOG.debug("Found header");
+                        sr.reset();
+                        String header = readHeaderTag(sr);
+                        LOG.debug("Found header <{}", header);
                     } else {
                         sr.reset();
                         if (root == null) {
                             root = readTag(sr);
                             currentParent = root;
+                            previousReadNode = root;
                         } else {
                             Node node = readTag(sr);
+                            previousReadNode = node;
                             node.setParent(currentParent);
                             if (node.isClosed() && node.getChildren().size() > 0) {
                                 currentParent.getChildren().addAll(node.getChildren());
@@ -82,15 +93,8 @@ public class XmlReader {
         return new Document(root);
     }
 
-    private Node readTag(StringReader sr) throws IOException {
-        String tag = "";
-        int current = 0;
-        while ((current = sr.read()) != '>') {
-            if (current == -1) {
-                break;
-            }
-            tag += (char) current;
-        }
+    private Node readTag(StringReader sr) throws IOException, XmlParseException {
+        String tag = getTagString(sr);
 
         tag = tag.trim();
 
@@ -116,8 +120,19 @@ public class XmlReader {
         return node;
     }
 
-    private Node getContent(StringReader sr) throws IOException {
-        int current;
+    private String getTagString(StringReader sr) throws IOException {
+        String tag = "";
+        int current = 0;
+        while ((current = sr.read()) != '>') {
+            if (current == -1) {
+                break;
+            }
+            tag += (char) current;
+        }
+        return tag;
+    }
+
+    private Node getContent(StringReader sr) throws XmlParseException, IOException {
         sr.mark(0);
         String trim = "";
         do  {
@@ -135,25 +150,40 @@ public class XmlReader {
             node.getComments().add(comment);
             node.getChildren().add(comment);
             node.setContent("&" + node.getComments().indexOf(comment) + ";" + node.getContent());
-            LOG.debug("FOUND COMMENT: {}", comment.getContent());
             return node;
+        } else if (trim.equals("<") && next == '?') {
+            String header = readHeaderTag(sr);
+            throw new XmlParseException("Found header tag inside body: " + header);
         } else {
             sr.reset();
         }
         return new Node<>();
     }
 
+    private String readHeaderTag(StringReader sr) throws IOException {
+        sr.reset();
+        String header = "";
+        int current;
+        while ((current = sr.read()) != -1) {
+            header += (char) current;
+            if (current == '>') {
+                break;
+            }
+        }
+        return header;
+    }
+
     private Node getNodeContent(StringReader sr) throws IOException {
         int current;
         String text = "";
         List<Comment> comments = new ArrayList<>();
-        char currentChar;
-        while ((current = sr.read()) != -1) {
-            currentChar = (char) current;
+        while (true) {
             sr.mark(0);
+            if ((current = sr.read()) == -1) {
+                break;
+            }
             if (current == '<') {
                 if (sr.read() == '!') {
-                    LOG.debug("FOUND COMMENT");
                     sr.reset();
                     Comment comment = getComment(sr);
                     comment.setContent(comment.getContent().replaceFirst("!--", "").trim());
