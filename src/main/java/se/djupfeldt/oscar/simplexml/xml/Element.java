@@ -1,10 +1,10 @@
-package se.djupfeldt.oscar.simplexml;
+package se.djupfeldt.oscar.simplexml.xml;
 
 /**
  * Created by ozsie on 14/07/16.
  */
 public abstract class Element<T> {
-    T content;
+    private T content;
 
     public T getContent() {
         return content;

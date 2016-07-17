@@ -1,46 +1,50 @@
 package se.djupfeldt.oscar.simplexml;
 
-import java.io.FileReader;
-import java.util.List;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import se.djupfeldt.oscar.simplexml.xml.Document;
+
+import java.io.IOException;
 
 /**
  * Created by osdjup on 2016-07-14.
  */
 public class TestXmlReader {
-
-    @org.junit.Test
-    public void testParseXmlText() {
-        String text = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"  >\n" +
-                "<root a=\"7\" b=\"5.6\">\n" +
-                "<child8><!-- comment 5 -->aas<!-- comment 6 -->d</child8>" +
-                "\t<child1 c=\"false\"/>\n" +
-                "\t<child4>\n" +
-                "\t\t<child6/>\n" +
-                "        <!-- comment -- 1 -->\n" +
-                "\t\t<child7>\n" +
-                "\t\t    <!-- comment 2 -->\n" +
-                "\t\t\taasd\n" +
-                "\t\t</child7>\n" +
-                "\t</child4>\n" +
-                "\t<child2>\n" +
-                "\t\t15\n" +
-                "\t</child2>\n" +
-                "\t<child3>\n" +
-                "\t\t<child4></child4>\n" +
-                "\t\t<child4 ko=\"u\"><a><b><c>djur</c></b></a></child4>\n" +
-                "\t\t<child5 d=\"d\">\n" +
-                "\t\t\tapa<!-- comment 3 -->apa<!-- comment 4 -->apa\n" +
-                "\t\t</child5>\n" +
-                "\t</child3>\n" +
-                "\t<child4/>\n" +
-                "</root>";
-        XmlReader reader = new XmlReader();
+    XmlReader reader;
+    Document doc;
+    @Before
+    public void setup() {
+        reader = new XmlReader();
+        String filePath = "src/test/resources/wellformed.xml";
         try {
-            Document doc = reader.parseXmlText(text);
-            System.out.println(doc.toFormattedString());
-        } catch (XmlParseException e) {
+            doc = reader.read(filePath);
+        } catch (IOException | XmlParseException e) {
             e.printStackTrace();
         }
+    }
+
+    //@Test
+    public void testParseXmlText() {
+        System.out.println(doc.toFormattedString());
+        System.out.println(doc.toString());
+    }
+
+    @Test
+    public void testProlog() {
+        Assert.assertNotNull(doc);
+        Assert.assertNotNull(doc.getXmlVersion());
+        Assert.assertEquals("1.0", doc.getXmlVersion());
+        Assert.assertNotNull(doc.getEncoding());
+        Assert.assertEquals("UTF-8", doc.getEncoding());
+        Assert.assertNotNull(doc.isStandalone());
+        Assert.assertEquals(Boolean.TRUE, doc.isStandalone());
+    }
+
+    @Test
+    public void testDoctype() {
+        Assert.assertNotNull(doc);
+        Assert.assertEquals("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\" [ <!-- an internal subset can be embedded here --> ] >", doc.getDocType());
     }
 }
 

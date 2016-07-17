@@ -1,4 +1,4 @@
-package se.djupfeldt.oscar.simplexml;
+package se.djupfeldt.oscar.simplexml.xml;
 
 import java.util.ArrayList;
 import java.util.List;

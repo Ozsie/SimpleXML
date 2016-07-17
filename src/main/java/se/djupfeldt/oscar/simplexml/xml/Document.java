@@ -1,4 +1,4 @@
-package se.djupfeldt.oscar.simplexml;
+package se.djupfeldt.oscar.simplexml.xml;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,10 @@ public class Document {
     private Node root;
     private String xmlVersion;
     private String encoding;
-    private boolean standalone;
+    private Boolean standalone;
+    private String docType;
+
+    public Document() {}
 
     public Document(Node root) {
         this.root = root;
@@ -32,20 +35,32 @@ public class Document {
         return xmlVersion;
     }
 
-    public boolean isStandalone() {
+    public Boolean isStandalone() {
         return standalone;
+    }
+
+    public Boolean getStandalone() {
+        return standalone;
+    }
+
+    public String getDocType() {
+        return docType;
     }
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
     }
 
-    public void setStandalone(boolean standalone) {
+    public void setStandalone(Boolean standalone) {
         this.standalone = standalone;
     }
 
     public void setXmlVersion(String xmlVersion) {
         this.xmlVersion = xmlVersion;
+    }
+
+    public void setDocType(String docType) {
+        this.docType = docType;
     }
 
     public List<Node> getNodesByName(String name) {
@@ -70,13 +85,17 @@ public class Document {
     public String toString() {
         String retVal = "<?xml version=\"" + xmlVersion + "\" encoding=\"" + encoding + "\" standalone=\"";
         retVal += (standalone ? "yes" : "no") + "\" >";
+        retVal += docType;
         retVal += root.toString();
         return retVal;
     }
 
     public String toFormattedString() {
         String retVal = "<?xml version=\"" + xmlVersion + "\" encoding=\"" + encoding + "\" standalone=\"";
-        retVal += (standalone ? "yes" : "no") + "\" >";
+        retVal += (standalone ? "yes" : "no") + "\" >\n";
+        if (docType != null) {
+            retVal += docType + "\n";
+        }
         retVal += root.toFormattedString();
         return retVal;
     }

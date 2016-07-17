@@ -1,4 +1,4 @@
-package se.djupfeldt.oscar.simplexml;
+package se.djupfeldt.oscar.simplexml.xml;
 
 /**
  * Created by ozsie on 14/07/16.
@@ -7,7 +7,7 @@ public class Comment extends Element<String> {
 
     @Override
     public String toString() {
-        return "<!-- " + content + " -->";
+        return "<!-- " + getContent() + " -->";
     }
 
     @Override

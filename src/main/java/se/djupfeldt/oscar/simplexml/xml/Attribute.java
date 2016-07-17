@@ -1,4 +1,4 @@
-package se.djupfeldt.oscar.simplexml;
+package se.djupfeldt.oscar.simplexml.xml;
 
 /**
  * Created by osdjup on 2016-07-14.
