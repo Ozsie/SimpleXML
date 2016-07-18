@@ -33,7 +33,8 @@ public class PrologHandler {
         }
     }
 
-    public boolean lookForProlog(StringReader sr, String tag, Document document) throws IOException, XmlParseException {
+    public boolean lookForProlog(StringReader sr, Document document) throws IOException, XmlParseException {
+        String tag = "";
         sr.reset();
         for (int i = 0; i < 5; i++) {
             tag += (char)sr.read();
@@ -53,7 +54,7 @@ public class PrologHandler {
                     }
                 }
                 tag += current;
-                if (current == '>') {
+                if (current == '?' && sr.read() == '>') {
                     parseProlog(tag, document);
                     return true;
                 }

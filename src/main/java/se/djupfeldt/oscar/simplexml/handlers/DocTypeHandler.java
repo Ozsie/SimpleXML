@@ -11,7 +11,8 @@ import java.io.StringReader;
  */
 public class DocTypeHandler {
 
-    public boolean lookForDocType(StringReader sr, String tag, Document document) throws IOException, XmlParseException {
+    public boolean lookForDocType(StringReader sr, Document document) throws IOException, XmlParseException {
+        String tag = "";
         sr.reset();
         for (int i = 0; i < 9; i++) {
             tag += (char) sr.read();

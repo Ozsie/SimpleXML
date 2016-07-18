@@ -96,15 +96,11 @@ public class Node<T> extends Element<T> {
             retVal += ">";
             if (content != null) {
                 retVal += "\n\t" + tabs;
-                if (!(content instanceof String)) {
-                    retVal += "(" + content.getClass().getSimpleName() + ")" + content;
-                } else {
-                    String content = (String)this.content;
-                    for (int i = 0; i < comments.size(); i++) {
-                        content = content.replace("&" + i + ";", comments.get(i).toString());
-                    }
-                    retVal += content;
+                String content = (String)this.content;
+                for (int i = 0; i < comments.size(); i++) {
+                    content = content.replace("&" + i + ";", comments.get(i).toString());
                 }
+                retVal += content;
             } else {
                 if (children.size() > 0){
                     for (Element child : children) {
@@ -135,15 +131,11 @@ public class Node<T> extends Element<T> {
         if (!closed) {
             retVal += ">";
             if (content != null) {
-                if (!(content instanceof String)) {
-                    retVal += "(" + content.getClass().getSimpleName() + ")" + content;
-                } else {
-                    String content = (String)this.content;
-                    for (int i = 0; i < comments.size(); i++) {
-                        content = content.replace("&" + i + ";", comments.get(i).toString());
-                    }
-                    retVal += content;
+                String content = (String)this.content;
+                for (int i = 0; i < comments.size(); i++) {
+                    content = content.replace("&" + i + ";", comments.get(i).toString());
                 }
+                retVal += content;
             } else {
                 if (children.size() > 0){
                     for (Element child : children) {

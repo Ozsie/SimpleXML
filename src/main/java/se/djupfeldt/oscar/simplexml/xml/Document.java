@@ -84,7 +84,7 @@ public class Document {
     @Override
     public String toString() {
         String retVal = "<?xml version=\"" + xmlVersion + "\" encoding=\"" + encoding + "\" standalone=\"";
-        retVal += (standalone ? "yes" : "no") + "\" >";
+        retVal += (standalone ? "yes" : "no") + "\" ?>";
         retVal += docType;
         retVal += root.toString();
         return retVal;
@@ -92,7 +92,7 @@ public class Document {
 
     public String toFormattedString() {
         String retVal = "<?xml version=\"" + xmlVersion + "\" encoding=\"" + encoding + "\" standalone=\"";
-        retVal += (standalone ? "yes" : "no") + "\" >\n";
+        retVal += (standalone ? "yes" : "no") + "\" ?>\n";
         if (docType != null) {
             retVal += docType + "\n";
         }

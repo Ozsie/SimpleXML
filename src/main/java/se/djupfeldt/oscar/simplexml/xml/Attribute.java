@@ -32,10 +32,6 @@ public class Attribute<T> {
 
     @Override
     public String toString() {
-        if (value instanceof String) {
-            return name + "=\"" + value + "\"";
-        } else {
-            return name + "=(" + value.getClass().getSimpleName() + ")\"" + value + "\"";
-        }
+        return name + "=\"" + value + "\"";
     }
 }

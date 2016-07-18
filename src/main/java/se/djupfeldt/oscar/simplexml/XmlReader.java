@@ -84,32 +84,47 @@ public class XmlReader {
                 next = (char) sr.read();
             }
             if (current == '<') {
-                String tag = "";
                 if (next == '?' && !foundProlog) {
                     LOG.debug("Found PROLOG");
-                    foundProlog = prologHandler.lookForProlog(sr, tag, document);
+                    foundProlog = prologHandler.lookForProlog(sr, document);
                     continue;
                 } else if (next == '?' && foundProlog) {
                     throw new XmlParseException("Found more than one XML prolog");
                 } else if (next == '!') {
                     next = (char)sr.read();
+                    char nextNext = (char)sr.read();
                     if (next == 'D' && !foundDocType) {
                         LOG.debug("Found DOCTYPE");
-                        foundDocType = docTypeHandler.lookForDocType(sr, tag, document);
+                        foundDocType = docTypeHandler.lookForDocType(sr, document);
                         continue;
-                    }
-                    if (next == '-' && sr.read() == '-') {
+                    } else if (next == '-' && nextNext == '-') {
                         Comment comment = commentHandler.readComment(sr);
                         LOG.debug("Found Comment: {}", comment);
+                        continue;
+                    } else if (next == '[' && nextNext == 'C') {
+                        LOG.debug("Found CDATA");
                     }
+                } else if(next == '/') {
+                    LOG.debug("Found closing tag");
+                    currentParent = getClosingTag(currentParent, sr, current, next);
                 } else {
                     LOG.debug("Found tag");
                     sr.reset();
                     Node node = nodeHandler.readTag(sr);
                     if (root == null) {
-                        root = node;
                         currentParent = node;
+                        root = node;
                         document.setRoot(root);
+                    } else {
+                        node.setParent(currentParent);
+                        if (node.isClosed() && node.getChildren().size() > 0) {
+                            currentParent.getChildren().addAll(node.getChildren());
+                            node.getChildren().clear();
+                        }
+                        currentParent.getChildren().add(node);
+                        if (!node.isClosed()) {
+                            currentParent = node;
+                        }
                     }
                 }
             }
@@ -118,8 +133,29 @@ public class XmlReader {
         return document;
     }
 
-
-
+    private Node getClosingTag(Node currentParent, StringReader sr, char current, char next) throws IOException, XmlParseException {
+        int currentInt;
+        String tag = "" + current + next;
+        while (true) {
+            currentInt = sr.read();
+            current = (char) currentInt;
+            if (currentInt == -1) {
+                throw new XmlParseException("Could not read end of closing tag: " + tag);
+            }
+            tag += current;
+            if (current == '>') {
+                break;
+            }
+        }
+        tag = tag.substring(2, tag.length() - 1);
+        if (!tag.equals(currentParent.getName())) {
+            throw new XmlParseException("Tag mismatch: " + currentParent.getName() + ", " + tag);
+        }
+        if (currentParent.getParent() != null) {
+            currentParent = currentParent.getParent();
+        }
+        return currentParent;
+    }
 
 
 }

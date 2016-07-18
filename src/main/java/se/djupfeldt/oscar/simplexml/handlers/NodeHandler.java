@@ -1,6 +1,7 @@
 package se.djupfeldt.oscar.simplexml.handlers;
 
 import se.djupfeldt.oscar.simplexml.xml.Attribute;
+import se.djupfeldt.oscar.simplexml.xml.Comment;
 import se.djupfeldt.oscar.simplexml.xml.Node;
 import se.djupfeldt.oscar.simplexml.Util;
 import se.djupfeldt.oscar.simplexml.XmlParseException;
@@ -16,26 +17,126 @@ import java.util.List;
 public class NodeHandler {
     boolean forceStringAttributes = false;
 
+    CommentHandler commentHandler;
+
     public NodeHandler(boolean forceStringAttributes) {
         this.forceStringAttributes = forceStringAttributes;
+        commentHandler = new CommentHandler();
     }
 
     public Node readTag(StringReader sr) throws IOException, XmlParseException {
         // Skip <
-        sr.read();
+        char skip = (char) sr.read();
         String name = readTagName(sr);
+        System.out.println("Reading tag: " + name);
+        boolean closed = false;
         List<Attribute> attributes = new ArrayList<>();
+        List<Comment> comments = new ArrayList<>();
         if (name.endsWith(">")) {
             name = name.substring(0, name.length() - 1);
+            if (name.endsWith("/")) {
+                closed = true;
+                name = name.substring(0, name.length() - 1);
+            }
         } else {
             attributes = getAttributes(sr, name);
+            while (true) {
+                int currentInt = sr.read();
+                char current = (char) currentInt;
+                if (currentInt == -1) {
+                    throw new XmlParseException("Could not find end of tag " + name);
+                }
+                if (current == '>') {
+                    break;
+                } else if (current == '/' && sr.read() == '>') {
+                    closed = true;
+                    break;
+                } else if (current == '/') {
+                    throw new XmlParseException("Found malplaced character '/' in tag " + name);
+                }
+            }
+        }
+        String content = null;
+        if (!closed) {
+            content = readContent(sr, name, comments);
+            if (content.trim().isEmpty()) {
+                content = null;
+            }
         }
 
         Node node = new Node();
         node.setName(name);
+        node.setClosed(closed);
+        node.setContent(content);
         node.getAttributes().addAll(attributes);
+        node.getComments().addAll(comments);
 
         return node;
+    }
+
+    private String readContent(StringReader sr, String tag, List<Comment> comments) throws XmlParseException, IOException {
+        String content = "";
+        while (true) {
+            sr.mark(0);
+            int currentInt = sr.read();
+            char current = (char) currentInt;
+            if (currentInt == -1) {
+                throw new XmlParseException("Reached end of document while reading tag content");
+            }
+            if (current == '<') {
+                char next = (char) sr.read();
+                if (next == '/') {
+                    sr.reset();
+                    break;
+                } else if (next == '!') {
+                    next = (char) sr.read();
+                    if (next == '-') {
+                        // Comment
+                        Comment comment = commentHandler.readComment(sr);
+                        comments.add(comment);
+                        continue;
+                    } else if (next == '[') {
+                        String cdata = readCData(sr);
+                        content += cdata;
+                        continue;
+                    }
+                } else if (!content.trim().isEmpty()) {
+                    throw new XmlParseException("Found new tag when reading content of html");
+                } else if (content.trim().isEmpty()) {
+                    sr.reset();
+                    break;
+                }
+            } else {
+                content += current;
+            }
+        }
+
+        return content.trim();
+    }
+
+    private String readCData(StringReader sr) throws IOException {
+        String cdata = "";
+        sr.reset();
+        while (true) {
+            int currentInt = sr.read();
+            char current = (char) currentInt;
+            if (currentInt == -1) {
+                break;
+            }
+            if (current == ']') {
+                sr.mark(0);
+                char next = (char) sr.read();
+                char nextNext = (char) sr.read();
+                if (next == ']' && nextNext == '>') {
+                    break;
+                }
+                sr.reset();
+            }
+            cdata += current;
+
+        }
+        cdata += "]]>";
+        return cdata;
     }
 
     private List<Attribute> getAttributes(StringReader sr, String tag) throws IOException, XmlParseException {
@@ -54,6 +155,7 @@ public class NodeHandler {
                 }
                 value = value.trim();
                 value = value.substring(1, value.length() - 1);
+                value = value.replace("\"", "");
                 Attribute attrib;
                 if (forceStringAttributes) {
                     attrib = new Attribute<>(name, value);
@@ -103,6 +205,7 @@ public class NodeHandler {
         String attributes = "";
         boolean readingAttribValue = false;
         while (true) {
+            sr.mark(0);
             int currentInt = sr.read();
             char current = (char) currentInt;
             if (current == '"') {
@@ -115,9 +218,11 @@ public class NodeHandler {
                 throw new XmlParseException("Unexpected character '<' in tag " + tag);
             }
             if (current == '>' && !readingAttribValue) {
+                sr.reset();
                 break;
             }
             if (current == '/' && !readingAttribValue) {
+                sr.reset();
                 break;
             }
             attributes += current;
