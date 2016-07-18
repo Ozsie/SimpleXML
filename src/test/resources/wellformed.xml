@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+	[
+		<!-- an internal subset can be embedded here -->
+	]
+>
+<!--
+	comment 1
+ -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<!-- comment 2 -->
+	<head>
+		<title>title</title>
+		<meta content="text/xhtml=banana" />
+	</head>
+	<body class="false">
+		<div>
+			<br/>
+			<!-- comment 3 -->
+			<p>
+				<!-- comment 4 -->
+				aasd
+			</p>
+			<div class="a b c d">
+				<span>
+					<![CDATA[ <<>>]]>
+				</span>
+				<span>
+					<!-- <![CDATA[ <<>>]]> -->
+				</span>
+				<span>
+					Hej <![CDATA[ <<>>]]>
+				</span>
+				<span>
+					<!-- comment 5 -->
+					Hej <![CDATA[ <<!-- Apa -->>]]>
+				</span>
+			</div>
+		</div>
+	</body>
+</html>
