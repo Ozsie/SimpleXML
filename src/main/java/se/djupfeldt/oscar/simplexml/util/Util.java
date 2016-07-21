@@ -16,25 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package se.djupfeldt.oscar.simplexml.xml;
+package se.djupfeldt.oscar.simplexml.util;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
- * Created by ozsie on 14/07/16.
+ * Created by ozsie on 16/07/16.
  */
-public class Comment extends Element<String> {
-
-    @Override
-    public String toString() {
-        return "<!-- " + getContent() + " -->";
+public class Util {
+    public static boolean isBoolean(String value) {
+        return (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"));
     }
 
-    @Override
-    public String toFormattedString() {
-        return toFormattedString("");
+    public static boolean isLong(String value) {
+        try {
+            Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 
-    @Override
-    public String toFormattedString(String tabs) {
-        return tabs + toString();
+    public static boolean isDouble(String value) {
+        if (!value.contains(".")) {
+            return false;
+        }
+        try {
+            Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 }

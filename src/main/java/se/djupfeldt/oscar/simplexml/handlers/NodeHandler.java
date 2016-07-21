@@ -1,13 +1,32 @@
+/*
+ * SimpleXML is a simple XML parser.  It reads an XML file or String and returns a Document object.
+ * Copyright (C) 2016 Oscar Djupfeldt
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package se.djupfeldt.oscar.simplexml.handlers;
 
+import se.djupfeldt.oscar.simplexml.util.StringInputStream;
 import se.djupfeldt.oscar.simplexml.xml.Attribute;
 import se.djupfeldt.oscar.simplexml.xml.Comment;
 import se.djupfeldt.oscar.simplexml.xml.Node;
-import se.djupfeldt.oscar.simplexml.Util;
+import se.djupfeldt.oscar.simplexml.util.Util;
 import se.djupfeldt.oscar.simplexml.XmlParseException;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,15 +35,17 @@ import java.util.List;
  */
 public class NodeHandler {
     boolean forceStringAttributes = false;
+    boolean forceStringContent = false;
 
     CommentHandler commentHandler;
 
-    public NodeHandler(boolean forceStringAttributes) {
+    public NodeHandler(boolean forceStringAttributes, boolean forceStringContent) {
         this.forceStringAttributes = forceStringAttributes;
+        this.forceStringContent = forceStringContent;
         commentHandler = new CommentHandler();
     }
 
-    public Node readTag(StringReader sr) throws IOException, XmlParseException {
+    public Node readTag(InputStream sr) throws IOException, XmlParseException {
         // Skip <
         char skip = (char) sr.read();
         String name = readTagName(sr);
@@ -65,16 +86,29 @@ public class NodeHandler {
         }
 
         Node node = new Node();
+        if (forceStringContent && content != null) {
+            node.setContent(content);
+        } else if (!forceStringContent && content != null){
+            if (Util.isLong(content)) {
+                node.setContent(Long.valueOf(content));
+            } else if (Util.isDouble(content)) {
+                node.setContent(Double.valueOf(content));
+            } else if (Util.isBoolean(content)) {
+                node.setContent(Boolean.parseBoolean(content));
+            } else {
+                node.setContent(content);
+            }
+        }
+
         node.setName(name);
         node.setClosed(closed);
-        node.setContent(content);
         node.getAttributes().addAll(attributes);
         node.getComments().addAll(comments);
 
         return node;
     }
 
-    private String readContent(StringReader sr, String tag, List<Comment> comments) throws XmlParseException, IOException {
+    private String readContent(InputStream sr, String tag, List<Comment> comments) throws XmlParseException, IOException {
         String content = "";
         while (true) {
             sr.mark(0);
@@ -114,7 +148,7 @@ public class NodeHandler {
         return content.trim();
     }
 
-    private String readCData(StringReader sr) throws IOException {
+    private String readCData(InputStream sr) throws IOException {
         String cdata = "";
         sr.reset();
         while (true) {
@@ -139,7 +173,7 @@ public class NodeHandler {
         return cdata;
     }
 
-    private List<Attribute> getAttributes(StringReader sr, String tag) throws IOException, XmlParseException {
+    private List<Attribute> getAttributes(InputStream sr, String tag) throws IOException, XmlParseException {
         String attributeString = readAttributes(sr, tag);
         List<String> attrParts = splitAttributeString(attributeString);
         List<Attribute> attributes = new ArrayList<>();
@@ -176,12 +210,12 @@ public class NodeHandler {
     }
 
     private List<String> splitAttributeString(String attributeString) throws IOException {
-        StringReader ar = new StringReader(attributeString);
+        InputStream attributeInputStream = new StringInputStream(attributeString);
         List<String> attrParts = new ArrayList<>();
         boolean readingAttrValue = false;
         String part = "";
         while (true) {
-            int currentInt = ar.read();
+            int currentInt = attributeInputStream.read();
             char current = (char) currentInt;
             if (currentInt == -1) {
                 break;
@@ -201,7 +235,7 @@ public class NodeHandler {
         return attrParts;
     }
 
-    String readAttributes(StringReader sr, String tag) throws IOException, XmlParseException {
+    String readAttributes(InputStream sr, String tag) throws IOException, XmlParseException {
         String attributes = "";
         boolean readingAttribValue = false;
         while (true) {
@@ -230,7 +264,7 @@ public class NodeHandler {
         return attributes.trim();
     }
 
-    String readTagName(StringReader sr) throws IOException, XmlParseException {
+    String readTagName(InputStream sr) throws IOException, XmlParseException {
         String tag = "";
         while (true) {
             int currentInt = sr.read();

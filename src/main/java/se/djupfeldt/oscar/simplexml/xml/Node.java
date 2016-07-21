@@ -1,3 +1,21 @@
+/*
+ * SimpleXML is a simple XML parser.  It reads an XML file or String and returns a Document object.
+ * Copyright (C) 2016 Oscar Djupfeldt
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package se.djupfeldt.oscar.simplexml.xml;
 
 import java.util.ArrayList;
@@ -7,11 +25,11 @@ import java.util.List;
  * Created by osdjup on 2016-07-14.
  */
 public class Node<T> extends Element<T> {
+    public static final int CONTENT_LENGTH_BEFORE_NL = 50;
     private Node parent;
     private List<Element> children;
     private List<Comment> comments;
     private List<Attribute> attributes;
-    private T content;
     private String name;
     private boolean closed;
 
@@ -26,7 +44,7 @@ public class Node<T> extends Element<T> {
         children = new ArrayList<>();
         attributes = new ArrayList<>();
         comments = new ArrayList<>();
-        this.content = content;
+        this.setContent(content);
         this.name = name;
     }
 
@@ -50,20 +68,12 @@ public class Node<T> extends Element<T> {
         return comments;
     }
 
-    public T getContent() {
-        return content;
-    }
-
     public boolean isClosed() {
         return closed;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setContent(T content) {
-        this.content = content;
     }
 
     public void setClosed(boolean closed) {
@@ -94,21 +104,35 @@ public class Node<T> extends Element<T> {
         }
         if (!closed) {
             retVal += ">";
-            if (content != null) {
-                retVal += "\n\t" + tabs;
-                String content = (String)this.content;
-                for (int i = 0; i < comments.size(); i++) {
-                    content = content.replace("&" + i + ";", comments.get(i).toString());
+            if (getContent() != null) {
+                if (getContent() instanceof String) {
+                    String c = (String) getContent();
+                    if (c.length() > CONTENT_LENGTH_BEFORE_NL) {
+                        retVal += "\n\t" + tabs;
+                    }
                 }
-                retVal += content;
+
+                retVal += getContent();
+                if (getContent() instanceof String) {
+                    String c = (String) getContent();
+                    if (c.length() > CONTENT_LENGTH_BEFORE_NL) {
+                        retVal += "\n" + tabs + "</" + name + ">";
+                    } else {
+                        retVal += "</" + name + ">";
+                    }
+                } else {
+                    retVal += "</" + name + ">";
+                }
             } else {
                 if (children.size() > 0){
                     for (Element child : children) {
                         retVal += "\n" + child.toFormattedString(tabs + "\t");
                     }
+                    retVal += "\n" + tabs + "</" + name + ">";
+                } else {
+                    retVal += "</" + name + ">";
                 }
             }
-            retVal += "\n" + tabs + "</" + name + ">";
         } else {
             retVal += "/>";
         }
@@ -130,8 +154,8 @@ public class Node<T> extends Element<T> {
         }
         if (!closed) {
             retVal += ">";
-            if (content != null) {
-                String content = (String)this.content;
+            if (getContent() != null) {
+                String content = String.valueOf(getContent());
                 for (int i = 0; i < comments.size(); i++) {
                     content = content.replace("&" + i + ";", comments.get(i).toString());
                 }

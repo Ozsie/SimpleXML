@@ -1,7 +1,24 @@
+/*
+ * SimpleXML is a simple XML parser.  It reads an XML file or String and returns a Document object.
+ * Copyright (C) 2016 Oscar Djupfeldt
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package se.djupfeldt.oscar.simplexml;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import se.djupfeldt.oscar.simplexml.xml.Attribute;
@@ -9,6 +26,7 @@ import se.djupfeldt.oscar.simplexml.xml.Comment;
 import se.djupfeldt.oscar.simplexml.xml.Document;
 import se.djupfeldt.oscar.simplexml.xml.Node;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -22,9 +40,10 @@ public class TestXmlReader {
     public static void setup() {
         reader = new XmlReader();
         String filePath = "src/test/resources/wellformed.xml";
+        File file = new File(filePath);
 
         try {
-            doc = reader.read(filePath);
+            doc = reader.read(file);
         } catch (IOException | XmlParseException e) {
             e.printStackTrace();
         }
@@ -74,30 +93,34 @@ public class TestXmlReader {
         Comment rootComment = (Comment) root.getComments().get(0);
         Assert.assertEquals(rootComment.getContent(), "comment 2");
     }
-}
 
-/*
-<? header >
-<root a=(Long)"7" b=(Double)"5.6">
-	<child1 c=(Boolean)"false"/>
-	<child4>
-		<child6/>
-        <!-- comment 1 -->
-		<child7>
-		    <!-- comment 2 -->
-			aasd
-		</child7>
-	</child4>
-	<child2(Long)>
-		15
-	</child2>
-	<child3>
-		<child4/>
-		<child4/>
-		<child5 d="d">
-			apa<!-- comment 3 -->apa
-		</child5>
-	</child3>
-	<child4/>
-</root>
- */
+    @Test
+    public void testReadString() {
+        try {
+            Document doc = reader.read(wellformedFlatXml);
+
+            Assert.assertNotNull(doc);
+            Assert.assertNotNull(doc.getRoot());
+            Assert.assertEquals("html", doc.getRoot().getName());
+        } catch (IOException | XmlParseException e) {
+
+        }
+    }
+
+    @Test
+    public void testForceString() {
+        try {
+            XmlReader reader = new XmlReader(true, true);
+            Document doc = reader.read(wellformedFlatXml);
+
+            Assert.assertNotNull(doc);
+            Assert.assertNotNull(doc.getRoot());
+            Node body = (Node) doc.getRoot().getChildren().get(1);
+            Attribute clazz = (Attribute) body.getAttributes().get(0);
+
+            Assert.assertEquals(String.class, clazz.getValue().getClass());
+        } catch (IOException | XmlParseException e) {
+
+        }
+    }
+}

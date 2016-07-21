@@ -1,21 +1,39 @@
+/*
+ * SimpleXML is a simple XML parser.  It reads an XML file or String and returns a Document object.
+ * Copyright (C) 2016 Oscar Djupfeldt
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package se.djupfeldt.oscar.simplexml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.djupfeldt.oscar.simplexml.handlers.*;
+import se.djupfeldt.oscar.simplexml.util.StringInputStream;
 import se.djupfeldt.oscar.simplexml.xml.Comment;
 import se.djupfeldt.oscar.simplexml.xml.Document;
 import se.djupfeldt.oscar.simplexml.xml.Node;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.nio.charset.Charset;
 
 /**
  * Created by osdjup on 2016-07-14.
  */
 public class XmlReader {
-    Logger LOG = LoggerFactory.getLogger(XmlReader.class);
+    private static Logger LOG = LoggerFactory.getLogger(XmlReader.class);
     boolean forceStringAttributes = false;
     boolean forceStringContent = false;
 
@@ -24,108 +42,80 @@ public class XmlReader {
     PrologHandler prologHandler;
     DocTypeHandler docTypeHandler;
 
+    Node root;
+
+    Boolean foundProlog;
+    Boolean foundDocType;
+
     public XmlReader() {
         commentHandler = new CommentHandler();
         prologHandler = new PrologHandler();
         docTypeHandler = new DocTypeHandler();
-        nodeHandler = new NodeHandler(forceStringAttributes);
+        nodeHandler = new NodeHandler(forceStringAttributes, forceStringContent);
     }
 
     public XmlReader(boolean forceStringAttributes, boolean forceStringContent) {
         commentHandler = new CommentHandler();
         prologHandler = new PrologHandler();
         docTypeHandler = new DocTypeHandler();
-        nodeHandler = new NodeHandler(forceStringAttributes);
+        nodeHandler = new NodeHandler(forceStringAttributes, forceStringContent);
 
         this.forceStringAttributes = forceStringAttributes;
         this.forceStringContent = forceStringContent;
     }
 
-    public Document read(String filePath, Charset charset) throws XmlParseException, IOException {
-        String fileContent = Util.readFile(filePath, charset);
-        return parseXmlText(fileContent);
+    public Document read(File file) throws XmlParseException, IOException {
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+        Document doc = parseXmlText(bis);
+        bis.close();
+        return doc;
     }
 
-    public Document read(String filePath) throws XmlParseException, IOException {
-        String fileContent = Util.readFile(filePath, Charset.defaultCharset());
-        return parseXmlText(fileContent);
-    }
-
-    public Document parseXmlText(String fileContent) throws XmlParseException, IOException {
-        if (fileContent == null || fileContent.isEmpty()) {
+    public Document read(String xml) throws XmlParseException, IOException {
+        if (xml == null || xml.isEmpty()) {
             throw new XmlParseException("No text to parse");
         }
+        StringInputStream sis = new StringInputStream(xml);
+        Document doc = parseXmlText(sis);
+        sis.close();
+        return doc;
+    }
+
+    public Document parseXmlText(InputStream inputStream) throws XmlParseException, IOException {
 
         Document document = new Document();
-        Node root = null;
+        root = null;
         Node currentParent = null;
-        Node previousReadNode = null;
 
-        boolean foundProlog = false;
-        boolean foundDocType = false;
+        foundProlog = false;
+        foundDocType = false;
 
-        StringReader sr = new StringReader(fileContent);
-        String total = "";
         while (true) {
-            sr.mark(0);
-            int currentInt = sr.read();
-            char current = (char) currentInt;
+            inputStream.mark(0);
+            int currentInt = inputStream.read();
+            Character current = (char) currentInt;
             if (currentInt < 0) {
                 LOG.debug("Reached end of document");
                 break;
             }
-            char next = (char) sr.read();
+            Character next = (char) inputStream.read();
             if (next == '<') {
-                sr.reset();
-                sr.read();
-                sr.mark(0);
-                currentInt = sr.read();
-                current = (char) currentInt;
-                next = (char) sr.read();
+                inputStream.reset();
+                inputStream.read();
+                continue;
             }
             if (current == '<') {
                 if (next == '?' && !foundProlog) {
-                    LOG.debug("Found PROLOG");
-                    foundProlog = prologHandler.lookForProlog(sr, document);
+                    foundProlog = prologHandler.lookForProlog(inputStream, document);
                     continue;
                 } else if (next == '?' && foundProlog) {
                     throw new XmlParseException("Found more than one XML prolog");
                 } else if (next == '!') {
-                    next = (char)sr.read();
-                    char nextNext = (char)sr.read();
-                    if (next == 'D' && !foundDocType) {
-                        LOG.debug("Found DOCTYPE");
-                        foundDocType = docTypeHandler.lookForDocType(sr, document);
-                        continue;
-                    } else if (next == '-' && nextNext == '-') {
-                        Comment comment = commentHandler.readComment(sr);
-                        LOG.debug("Found Comment: {}", comment);
-                        continue;
-                    } else if (next == '[' && nextNext == 'C') {
-                        LOG.debug("Found CDATA");
-                    }
+                    getSpecialTag(inputStream, document);
                 } else if(next == '/') {
-                    LOG.debug("Found closing tag");
-                    currentParent = getClosingTag(currentParent, sr, current, next);
+                    currentParent = getClosingTag(currentParent, inputStream, current, next);
                 } else {
-                    LOG.debug("Found tag");
-                    sr.reset();
-                    Node node = nodeHandler.readTag(sr);
-                    if (root == null) {
-                        currentParent = node;
-                        root = node;
-                        document.setRoot(root);
-                    } else {
-                        node.setParent(currentParent);
-                        if (node.isClosed() && node.getChildren().size() > 0) {
-                            currentParent.getChildren().addAll(node.getChildren());
-                            node.getChildren().clear();
-                        }
-                        currentParent.getChildren().add(node);
-                        if (!node.isClosed()) {
-                            currentParent = node;
-                        }
-                    }
+                    currentParent = getOpeningTag(document, currentParent, inputStream);
                 }
             }
         }
@@ -133,7 +123,42 @@ public class XmlReader {
         return document;
     }
 
-    private Node getClosingTag(Node currentParent, StringReader sr, char current, char next) throws IOException, XmlParseException {
+    void getSpecialTag(InputStream inputStream, Document document) throws XmlParseException, IOException {
+        char next = (char)inputStream.read();
+        char nextNext = (char)inputStream.read();
+        if (next == 'D' && !foundDocType) {
+            foundDocType = docTypeHandler.lookForDocType(inputStream, document);
+        } else if (next == '-' && nextNext == '-') {
+            Comment comment = commentHandler.readComment(inputStream);
+            LOG.debug("Found Comment: {}", comment);
+        } else if (next == '[' && nextNext == 'C') {
+            LOG.debug("Found CDATA");
+        }
+    }
+
+    Node getOpeningTag(Document document, Node currentParent, InputStream inputStream) throws XmlParseException, IOException {
+        inputStream.reset();
+        Node node = nodeHandler.readTag(inputStream);
+        if (root == null) {
+            currentParent = node;
+            root = node;
+            document.setRoot(root);
+        } else {
+            node.setParent(currentParent);
+            if (node.isClosed() && node.getChildren().size() > 0) {
+                currentParent.getChildren().addAll(node.getChildren());
+                node.getChildren().clear();
+            }
+            currentParent.getChildren().add(node);
+            if (!node.isClosed()) {
+                currentParent = node;
+            }
+        }
+
+        return currentParent;
+    }
+
+    Node getClosingTag(Node currentParent, InputStream sr, char current, char next) throws IOException, XmlParseException {
         int currentInt;
         String tag = "" + current + next;
         while (true) {

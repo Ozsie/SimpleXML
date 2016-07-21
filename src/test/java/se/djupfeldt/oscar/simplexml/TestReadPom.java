@@ -16,22 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package se.djupfeldt.oscar.simplexml.xml;
+package se.djupfeldt.oscar.simplexml;
+
+import org.junit.Test;
+import se.djupfeldt.oscar.simplexml.xml.Document;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
- * Created by ozsie on 14/07/16.
+ * Created by ozsie on 19/07/16.
  */
-public abstract class Element<T> {
-    private T content;
+public class TestReadPom {
+    @Test
+    public void readPom() {
+        XmlReader reader = new XmlReader();
+        String filePath = "pom.xml";
+        File file = new File(filePath);
 
-    public T getContent() {
-        return content;
+        try {
+            Document doc = reader.read(file);
+            System.out.println(doc.toFormattedString());
+        } catch (IOException | XmlParseException e) {
+            e.printStackTrace();
+        }
     }
-
-    public void setContent(T content) {
-        this.content = content;
-    }
-
-    public abstract String toFormattedString();
-    public abstract String toFormattedString(String tabs);
 }
