@@ -24,10 +24,10 @@ import java.util.List;
 /**
  * Created by osdjup on 2016-07-14.
  */
-public class Node<T> extends Element<T> {
+public class Node<T> extends XmlElement<T> {
     public static final int CONTENT_LENGTH_BEFORE_NL = 50;
     private Node parent;
-    private List<Element> children;
+    private List<XmlElement> children;
     private List<Comment> comments;
     private List<Attribute> attributes;
     private String name;
@@ -60,7 +60,7 @@ public class Node<T> extends Element<T> {
         return attributes;
     }
 
-    public List<Element> getChildren() {
+    public List<XmlElement> getChildren() {
         return children;
     }
 
@@ -85,7 +85,7 @@ public class Node<T> extends Element<T> {
     }
 
     public boolean hasChild(String name) {
-        for (Element child : children) {
+        for (XmlElement child : children) {
             if (child instanceof Node) {
                 if (((Node) child).getName().equals(name)) {
                     return true;
@@ -125,7 +125,7 @@ public class Node<T> extends Element<T> {
                 }
             } else {
                 if (children.size() > 0){
-                    for (Element child : children) {
+                    for (XmlElement child : children) {
                         retVal += "\n" + child.toFormattedString(tabs + "\t");
                     }
                     retVal += "\n" + tabs + "</" + name + ">";
@@ -162,7 +162,7 @@ public class Node<T> extends Element<T> {
                 retVal += content;
             } else {
                 if (children.size() > 0){
-                    for (Element child : children) {
+                    for (XmlElement child : children) {
                         retVal += child.toString();
                     }
                 }

@@ -21,5 +21,6 @@ package se.djupfeldt.oscar.simplexml.xml;
 /**
  * Created by ozsie on 23/07/16.
  */
-public class Element {
+public enum DocTypeAvailability {
+    PUBLIC, SYSTEM
 }

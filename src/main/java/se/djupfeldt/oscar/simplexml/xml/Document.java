@@ -29,7 +29,7 @@ public class Document {
     private String xmlVersion;
     private String encoding;
     private Boolean standalone;
-    private String docType;
+    private DocType docType;
 
     public Document() {}
 
@@ -61,7 +61,7 @@ public class Document {
         return standalone;
     }
 
-    public String getDocType() {
+    public DocType getDocType() {
         return docType;
     }
 
@@ -77,7 +77,7 @@ public class Document {
         this.xmlVersion = xmlVersion;
     }
 
-    public void setDocType(String docType) {
+    public void setDocType(DocType docType) {
         this.docType = docType;
     }
 
@@ -126,7 +126,7 @@ public class Document {
         }
         retVal += "?>\n";
         if (docType != null) {
-            retVal += docType + "\n";
+            retVal += docType.toFormattedString() + "\n";
         }
         retVal += root.toFormattedString();
         return retVal;

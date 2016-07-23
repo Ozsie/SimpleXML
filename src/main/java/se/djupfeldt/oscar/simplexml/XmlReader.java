@@ -27,6 +27,7 @@ import se.djupfeldt.oscar.simplexml.xml.Document;
 import se.djupfeldt.oscar.simplexml.xml.Node;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
 /**
@@ -64,14 +65,14 @@ public class XmlReader {
         this.forceStringContent = forceStringContent;
     }
 
-    public Document read(File file) throws XmlParseException, IOException {
+    public Document read(File file) throws XmlParseException, IOException, URISyntaxException {
         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
         Document doc = parseXmlText(bis);
         bis.close();
         return doc;
     }
 
-    public Document read(String xml) throws XmlParseException, IOException {
+    public Document read(String xml) throws XmlParseException, IOException, URISyntaxException {
         if (xml == null || xml.isEmpty()) {
             throw new XmlParseException("No text to parse");
         }
@@ -81,7 +82,7 @@ public class XmlReader {
         return doc;
     }
 
-    public Document parseXmlText(InputStream inputStream) throws XmlParseException, IOException {
+    public Document parseXmlText(InputStream inputStream) throws XmlParseException, IOException, URISyntaxException {
 
         Document document = new Document();
         root = null;
@@ -123,14 +124,13 @@ public class XmlReader {
         return document;
     }
 
-    void getSpecialTag(InputStream inputStream, Document document) throws XmlParseException, IOException {
+    void getSpecialTag(InputStream inputStream, Document document) throws XmlParseException, IOException, URISyntaxException {
         char next = (char)inputStream.read();
         char nextNext = (char)inputStream.read();
         if (next == 'D' && !foundDocType) {
             foundDocType = docTypeHandler.lookForDocType(inputStream, document);
         } else if (next == '-' && nextNext == '-') {
             Comment comment = commentHandler.readComment(inputStream);
-            LOG.debug("Found Comment: {}", comment);
         } else if (next == '[' && nextNext == 'C') {
             LOG.debug("Found CDATA");
         }

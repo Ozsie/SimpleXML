@@ -49,7 +49,6 @@ public class NodeHandler {
         // Skip <
         char skip = (char) sr.read();
         String name = readTagName(sr);
-        System.out.println("Reading tag: " + name);
         boolean closed = false;
         List<Attribute> attributes = new ArrayList<>();
         List<Comment> comments = new ArrayList<>();

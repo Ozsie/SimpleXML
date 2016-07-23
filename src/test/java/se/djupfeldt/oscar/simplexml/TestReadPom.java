@@ -37,7 +37,7 @@ public class TestReadPom {
         try {
             Document doc = reader.read(file);
             System.out.println(doc.toFormattedString());
-        } catch (IOException | XmlParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

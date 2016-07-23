@@ -19,17 +19,22 @@
 package se.djupfeldt.oscar.simplexml.handlers;
 
 import se.djupfeldt.oscar.simplexml.XmlParseException;
+import se.djupfeldt.oscar.simplexml.xml.DocType;
+import se.djupfeldt.oscar.simplexml.xml.DocTypeAvailability;
 import se.djupfeldt.oscar.simplexml.xml.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Created by ozsie on 17/07/16.
  */
 public class DocTypeHandler {
 
-    public boolean lookForDocType(InputStream sr, Document document) throws IOException, XmlParseException {
+    public boolean lookForDocType(InputStream sr, Document document) throws IOException, XmlParseException, URISyntaxException {
         String tag = "";
         sr.reset();
         for (int i = 0; i < 9; i++) {
@@ -59,12 +64,113 @@ public class DocTypeHandler {
                     subset = false;
                 }
                 if (current == '>' && !subset) {
-                    document.setDocType(tag);
+                    DocType docType = parseDocType(tag);
+                    document.setDocType(docType);
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    private DocType parseDocType(String docTypeString) throws IOException, XmlParseException, URISyntaxException {
+        String tag = "";
+        StringReader sr = new StringReader(docTypeString);
+        for (int i = 0; i < 9; i++) {
+            tag += (char) sr.read();
+        }
+        if (!tag.equalsIgnoreCase("<!DOCTYPE")) {
+            throw new XmlParseException("Malformed doctype.");
+        }
+        String rootElement = readRootElement(sr);
+        DocTypeAvailability availability = readAvailability(sr);
+        String name = null;
+        URI location = null;
+        if (availability != null) {
+            switch (availability) {
+                case PUBLIC:
+                    name = readName(sr);
+                case SYSTEM:
+                    location = readLocation(sr);
+                    break;
+            }
+        }
+
+        String internalSubset = readInternalSubset(sr);
+
+        DocType docType = new DocType();
+        docType.setRootElement(rootElement);
+        docType.setAvailability(availability);
+        docType.setName(name);
+        docType.setLocation(location);
+        docType.setInternalSubset(internalSubset);
+
+        return docType;
+    }
+
+    private String readRootElement(StringReader sr) throws IOException {
+        char current;
+        String availability = "";
+        //Skip space
+        sr.read();
+        while ((current = (char) sr.read()) != ' ') {
+            availability += current;
+        }
+        return availability;
+    }
+
+    private DocTypeAvailability readAvailability(StringReader sr) throws IOException {
+        sr.mark(0);
+        char current;
+        String availability = "";
+        while ((current = (char) sr.read()) != ' ') {
+            availability += current;
+        }
+        try {
+            return DocTypeAvailability.valueOf(availability);
+        } catch (IllegalArgumentException e) {
+            sr.reset();
+            return null;
+        }
+    }
+
+    private String readName(StringReader sr) throws IOException {
+        char current;
+        String name = "";
+        //Skip "
+        sr.read();
+        while ((current = (char) sr.read()) != '"') {
+            name += current;
+        }
+        return name;
+    }
+
+    private URI readLocation(StringReader sr) throws IOException, URISyntaxException {
+        char current;
+        String location = "";
+        //Skip space and "
+        sr.read();
+        sr.read();
+        while ((current = (char) sr.read()) != '"') {
+            location += current;
+        }
+        return new URI(location);
+    }
+
+    private String readInternalSubset(StringReader sr) throws IOException, URISyntaxException {
+        sr.mark(0);
+        char current;
+        String internal = "";
+        //Skip space
+        sr.read();
+        if (sr.read() == '[') {
+            while ((current = (char) sr.read()) != ']') {
+                internal += current;
+            }
+            return internal.trim();
+        }
+        sr.reset();
+        return null;
     }
 }

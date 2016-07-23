@@ -35,7 +35,8 @@ import java.io.IOException;
 public class TestXmlReader {
     static XmlReader reader;
     static Document doc;
-    static String wellformedFlatXml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\" [ <!-- an internal subset can be embedded here --> ] ><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>title</title><meta content=\"text/xhtml=banana\"/></head><body class=\"false\"><div><br/><p>aasd</p><div class=\"a b c d\"><span><![CDATA[ <<>>]]></span><span></span><span>Hej <![CDATA[ <<>>]]></span><span>Hej <![CDATA[ <<!-- Apa -->>]]></span></div></div></body></html>";
+    static String wellformedDocType = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\" [ <!-- an internal subset can be embedded here --> <!ELEMENT book (#PCDATA)> ] >";
+    static String wellformedFlatXml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>" + wellformedDocType + "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title>title</title><meta content=\"text/xhtml=banana\"/></head><body class=\"false\"><div><br/><p>aasd</p><div class=\"a b c d\"><span><![CDATA[ <<>>]]></span><span></span><span>Hej <![CDATA[ <<>>]]></span><span>Hej <![CDATA[ <<!-- Apa -->>]]></span></div></div></body></html>";
     @BeforeClass
     public static void setup() {
         reader = new XmlReader();
@@ -44,7 +45,7 @@ public class TestXmlReader {
 
         try {
             doc = reader.read(file);
-        } catch (IOException | XmlParseException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -70,7 +71,7 @@ public class TestXmlReader {
     @Test
     public void testDoctype() {
         Assert.assertNotNull(doc);
-        Assert.assertEquals("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\" [ <!-- an internal subset can be embedded here --> ] >", doc.getDocType());
+        Assert.assertEquals(wellformedDocType, doc.getDocType().toString());
     }
 
     @Test
@@ -102,7 +103,7 @@ public class TestXmlReader {
             Assert.assertNotNull(doc);
             Assert.assertNotNull(doc.getRoot());
             Assert.assertEquals("html", doc.getRoot().getName());
-        } catch (IOException | XmlParseException e) {
+        } catch (Exception e) {
 
         }
     }
@@ -119,7 +120,7 @@ public class TestXmlReader {
             Attribute clazz = (Attribute) body.getAttributes().get(0);
 
             Assert.assertEquals(String.class, clazz.getValue().getClass());
-        } catch (IOException | XmlParseException e) {
+        } catch (Exception e) {
 
         }
     }
